@@ -5,10 +5,10 @@ import re
 import cv2 as cv
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
-path_to_file = os.path.abspath(os.path.join(os.getcwd(), "docs/document-1.pdf"))
+files = [os.path.abspath(os.path.join(os.getcwd(), f"docs/acord_{number}.pdf")) for number in range( 1, 8 )]
 page_number = 0
-
 
 def convert_pdf_to_image(file: str) -> list[np.ndarray]:
     """
@@ -59,10 +59,10 @@ def get_average_confidence_level(images: list[np.ndarray]) -> float:
     if not isinstance(images, list):
         images = [images]
 
-    total = 0
+    total = []
     for image in images:
         word_conf_dict = get_confidence_level_per_word(image)
-        total += sum(word_conf_dict.values()) / len(word_conf_dict)
+        total.append(sum(word_conf_dict.values()) / len(word_conf_dict))
 
     return total
 
@@ -131,16 +131,32 @@ def scale_image(images: list[np.ndarray], amount: int = 1.4) -> list[np.ndarray]
 
     return modified_images
 
+def plot_averages(avgs1, avgs2):
+    modifications = ("base", "scaled (1.4x)")
+    width = .25
+    x = np.arange(len(avgs1))
+    multiplier = 0
 
-base_images = convert_pdf_to_image(path_to_file)
+    fig, ax = plt.subplots(layout = "constrained")
+    
+    ax.bar(x, avgs1, width, data=avgs1, label=modifications[0])
+    ax.bar(x+width,avgs2, width, data=avgs2, label = modifications[1])
+    
+    ax.set_xticklabels([f"acord_{file_number + 1}" for file_number in range(len(avgs1))])
+    ax.set_xticks(x + width/2)
 
-draw_bounding_boxes(base_images[0])
-# draw_bounding_boxes(scale_image(base_image))
+    plt.show()
 
-# for i in range(3):
-#     base_image = base_images[i]
-#     avgs = []
-#     for i in range(10, 20):
-#         avgs.append(get_average_confidence_level(scale_image(base_image, i / 10)))
 
-#     print(avgs)
+base_avgs = []
+scaled_avgs = []
+for file in files:
+    base_images = convert_pdf_to_image(file)[0]
+    avgs = get_average_confidence_level(base_images)
+    base_avgs.append(sum(avgs) / len(avgs))
+
+    scaled_images = scale_image(base_images)
+    avgs = get_average_confidence_level(scaled_images)
+    scaled_avgs.append(sum(avgs)/len(avgs))
+    
+plot_averages(base_avgs, scaled_avgs)
