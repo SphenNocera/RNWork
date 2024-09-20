@@ -117,7 +117,7 @@ def erode_image(images: list[np.ndarray], kernel_size: int = 3) -> list[np.ndarr
 
 def scale_image(images: list[np.ndarray], amount: int = 1.4) -> list[np.ndarray]:
     """
-    Returns the eroded images in order to make the text more bold. For more info read here: <https://homepages.inf.ed.ac.uk/rbf/HIPR2/erode.htm>
+    Returns the scaled images in order to make the text larger. For more info read here: <https://homepages.inf.ed.ac.uk/rbf/HIPR2/erode.htm>
     """
 
     if not isinstance(images, list):
@@ -131,32 +131,46 @@ def scale_image(images: list[np.ndarray], amount: int = 1.4) -> list[np.ndarray]
 
     return modified_images
 
-def plot_averages(avgs1, avgs2):
-    modifications = ("base", "scaled (1.4x)")
+def plot_averages(avgs1, avgs2, avgs3):
+    modifications = ("base", "scaled (1.4x)", "scaled & eroded")
     width = .25
     x = np.arange(len(avgs1))
-    multiplier = 0
 
     fig, ax = plt.subplots(layout = "constrained")
     
     ax.bar(x, avgs1, width, data=avgs1, label=modifications[0])
     ax.bar(x+width,avgs2, width, data=avgs2, label = modifications[1])
+    ax.bar(x+width*2,avgs3, width, data=avgs3, label = modifications[2])
     
     ax.set_xticklabels([f"acord_{file_number + 1}" for file_number in range(len(avgs1))])
-    ax.set_xticks(x + width/2)
+    ax.set_xticks(x + width/3)
+    ax.legend(loc="upper left", ncols = 3)
+    
 
     plt.show()
 
 
-base_avgs = []
-scaled_avgs = []
-for file in files:
-    base_images = convert_pdf_to_image(file)[0]
-    avgs = get_average_confidence_level(base_images)
-    base_avgs.append(sum(avgs) / len(avgs))
+# base_avgs = []
+# scaled_avgs = []
+# eroded_avgs = []
+# for file in files:
+#     base_images = convert_pdf_to_image(file)[0]
+#     avgs = get_average_confidence_level(base_images)
+#     base_avgs.append(sum(avgs) / len(avgs))
 
-    scaled_images = scale_image(base_images)
-    avgs = get_average_confidence_level(scaled_images)
-    scaled_avgs.append(sum(avgs)/len(avgs))
+#     scaled_images = scale_image(base_images)
+#     avgs = get_average_confidence_level(scaled_images)
+#     scaled_avgs.append(sum(avgs)/len(avgs))
     
-plot_averages(base_avgs, scaled_avgs)
+#     eroded_images = erode_image(base_images)
+#     avgs = get_average_confidence_level(eroded_images)
+#     eroded_avgs.append(sum(avgs)/len(avgs))
+    
+
+# plot_averages(base_avgs, scaled_avgs, eroded_avgs)
+
+base_images = convert_pdf_to_image(files[2])[0]
+draw_bounding_boxes(base_images)
+draw_bounding_boxes(scale_image(base_images))
+print(get_average_confidence_level(base_images))
+print(get_average_confidence_level(scale_image(base_images)))
