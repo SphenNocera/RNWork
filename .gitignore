@@ -1,1 +1,4 @@
 venv/
+.DS_Store
+.python-version
+cv_test.py

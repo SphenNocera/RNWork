@@ -16,7 +16,7 @@ def convert_pdf_to_image(file: str) -> list[np.ndarray]:
     """
 
     images = convert_from_path(file)
-    images = get_image_data_for_opencv(images, cv.COLOR_BGR2RGB)
+    images = get_image_data_for_opencv(images, cv.COLOR_BGR2GRAY)
     return images
 
 
@@ -33,11 +33,6 @@ def get_image_data_for_opencv(images: list, conversion_type: int) -> list[np.nda
     imgs = converted_images
 
     return imgs
-
-
-# example function to extract info from the text
-def extract_email(txt: str):
-    return re.search(".*@.*\.com", txt, re.IGNORECASE).group(0)
 
 
 def get_confidence_level_per_word(image: np.ndarray) -> dict:
@@ -97,7 +92,6 @@ def draw_bounding_boxes(
         Image.fromarray(image).show()
 
 
-# THIS MAKES IT WORSE
 def erode_image(images: list[np.ndarray], kernel_size: int = 3) -> list[np.ndarray]:
     """
     Returns the eroded images in order to make the text more bold. For more info read here: <https://homepages.inf.ed.ac.uk/rbf/HIPR2/erode.htm>
@@ -131,46 +125,76 @@ def scale_image(images: list[np.ndarray], amount: int = 1.4) -> list[np.ndarray]
 
     return modified_images
 
+
+def sharpen_image(images: list[np.ndarray]):
+
+    if not isinstance(images, list):
+        images = [images]
+
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+
+    modified_images = []
+    for image in images:
+        modified_images.append(cv.filter2D(image, -1, kernel))
+    return modified_images
+
+
+def blur_image(images: list[np.ndarray]):
+
+    if not isinstance(images, list):
+        images = [images]
+
+    modified_images = []
+    for image in images:
+        modified_images.append(cv.GaussianBlur(image, (5, 5)))
+    return modified_images
+
+
+def denoise_image(images: list[np.ndarray]):
+
+    if not isinstance(images, list):
+        images = [images]
+
+    modified_images = []
+    for image in images:
+        modified_images.append(cv.fastNlMeansDenoising(image, -1))
+    return modified_images
+
+
+def apply_threshold(images: list[np.ndarray], min_threshold: int):
+
+    if not isinstance(images, list):
+        images = [images]
+
+    modified_images = []
+    for image in images:
+        modified_images.append(
+            cv.threshold(image, min_threshold, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)[
+                1
+            ]
+        )
+    return modified_images
+
+
 def plot_averages(avgs1, avgs2, avgs3):
     modifications = ("base", "scaled (1.4x)", "scaled & eroded")
     width = .25
     x = np.arange(len(avgs1))
 
     fig, ax = plt.subplots(layout = "constrained")
-    
+
     ax.bar(x, avgs1, width, data=avgs1, label=modifications[0])
     ax.bar(x+width,avgs2, width, data=avgs2, label = modifications[1])
     ax.bar(x+width*2,avgs3, width, data=avgs3, label = modifications[2])
-    
+
     ax.set_xticklabels([f"acord_{file_number + 1}" for file_number in range(len(avgs1))])
     ax.set_xticks(x + width/3)
-    ax.legend(loc="upper left", ncols = 3)
-    
+    ax.legend(loc="upper left", ncols=3)
 
     plt.show()
 
 
-# base_avgs = []
-# scaled_avgs = []
-# eroded_avgs = []
-# for file in files:
-#     base_images = convert_pdf_to_image(file)[0]
-#     avgs = get_average_confidence_level(base_images)
-#     base_avgs.append(sum(avgs) / len(avgs))
-
-#     scaled_images = scale_image(base_images)
-#     avgs = get_average_confidence_level(scaled_images)
-#     scaled_avgs.append(sum(avgs)/len(avgs))
-    
-#     eroded_images = erode_image(base_images)
-#     avgs = get_average_confidence_level(eroded_images)
-#     eroded_avgs.append(sum(avgs)/len(avgs))
-    
-
-# plot_averages(base_avgs, scaled_avgs, eroded_avgs)
-
 base_images = convert_pdf_to_image(files[2])[0]
-draw_bounding_boxes(base_images)
-draw_bounding_boxes(scale_image(base_images))
-print(get_average_confidence_level(base_images))
-print(get_average_confidence_level(scale_image(base_images)))
+# threshold = erode_image(apply_threshold(scale_image(base_images)))
+multi_processed = scale_image(denoise_image(sharpen_image(base_images)))
+threshold = apply_threshold(base_images, 1)
