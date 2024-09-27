@@ -1,7 +1,6 @@
 import pytesseract
 from PIL import Image
 from pdf2image import convert_from_path
-import re
 import cv2 as cv
 import os
 import numpy as np
@@ -47,7 +46,7 @@ def get_confidence_level_per_word(image: np.ndarray) -> dict:
     return word_to_conf
 
 
-def get_average_confidence_level(images: list[np.ndarray]) -> float:
+def get_average_confidence_level(images: list[np.ndarray]) -> list[float]:
     """
     Returns the average of every word and its corresponding confidence level.
     """
@@ -109,7 +108,7 @@ def erode_image(images: list[np.ndarray], kernel_size: int = 3) -> list[np.ndarr
     return modified_images
 
 
-def scale_image(images: list[np.ndarray], amount: int = 1.4) -> list[np.ndarray]:
+def scale_image(images: list[np.ndarray], amount: float = 1.4) -> list[np.ndarray]:
     """
     Returns the scaled images in order to make the text larger. For more info read here: <https://homepages.inf.ed.ac.uk/rbf/HIPR2/erode.htm>
     """
@@ -146,7 +145,7 @@ def blur_image(images: list[np.ndarray]):
 
     modified_images = []
     for image in images:
-        modified_images.append(cv.GaussianBlur(image, (5, 5)))
+        modified_images.append(cv.GaussianBlur(image, (5, 5), 1))
     return modified_images
 
 
@@ -175,6 +174,33 @@ def apply_threshold(images: list[np.ndarray], min_threshold: int):
         )
     return modified_images
 
+def get_lines_in_image(image):
+    if len(image.shape) != 2:
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    else:
+        gray = image
+
+    gray = cv.bitwise_not(gray)
+    bw = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 15, -2)
+    
+    hor = np.copy(bw)
+    vert = np.copy(bw)
+
+    cols = hor.shape[1]
+    rows = vert.shape[0]
+    h_size = cols // 30
+    v_size = rows // 30
+
+    hor_structure = cv.getStructuringElement(cv.MORPH_RECT, (h_size, 1))
+    vert_structure = cv.getStructuringElement(cv.MORPH_RECT, (1, v_size))
+
+    hor = cv.morphologyEx(hor, cv.MORPH_OPEN, hor_structure)
+    vert = cv.morphologyEx(vert, cv.MORPH_OPEN, vert_structure)
+
+    all_lines = cv.add(hor, vert)
+
+    final = cv.add(image, vert)
+    return final
 
 def plot_averages(avgs1, avgs2, avgs3):
     modifications = ("base", "scaled (1.4x)", "scaled & eroded")
@@ -195,6 +221,10 @@ def plot_averages(avgs1, avgs2, avgs3):
 
 
 base_images = convert_pdf_to_image(files[2])[0]
-# threshold = erode_image(apply_threshold(scale_image(base_images)))
-multi_processed = scale_image(denoise_image(sharpen_image(base_images)))
-threshold = apply_threshold(base_images, 1)
+lines_gone = get_lines_in_image(base_images)
+Image.fromarray(lines_gone).show()
+print(get_average_confidence_level(base_images))
+print(get_average_confidence_level(lines_gone))
+#Next step, try maybe inpainting for correction
+
+
