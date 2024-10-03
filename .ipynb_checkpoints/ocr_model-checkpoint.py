@@ -225,14 +225,13 @@ def plot_averages(avgs1, avgs2, avgs3):
 
 
 base_images = convert_pdf_to_image(files[2])[0]
-Image.fromarray(base_images).show()
-# lines_gone = get_lines_in_image(base_images)
-# lines_gone = denoise_image(lines_gone)[0]
+lines_gone = get_lines_in_image(base_images)
+lines_gone = denoise_image(lines_gone)[0]
 # lines_gone = apply_threshold(lines_gone, 25)
-# lines_gone = scale_image(lines_gone)[0]
+lines_gone = scale_image(lines_gone)[0]
 # Image.fromarray(lines_gone).show()
-# print(get_confidence_level_per_word(lines_gone))
-# print(get_average_confidence_level(base_images))
-# print(get_average_confidence_level(lines_gone))
-# draw_bounding_boxes(lines_gone)
+print(get_confidence_level_per_word(lines_gone))
+print(get_average_confidence_level(base_images))
+print(get_average_confidence_level(lines_gone))
+draw_bounding_boxes(lines_gone)
 # Next step, try maybe inpainting for correction
