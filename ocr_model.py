@@ -168,9 +168,7 @@ def apply_threshold(images: list[np.ndarray], min_threshold: int):
     modified_images = []
     for image in images:
         modified_images.append(
-            cv.threshold(image, min_threshold, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)[
-                1
-            ]
+            cv.threshold(image, min_threshold, 255, cv.THRESH_BINARY)[1]
         )
     return modified_images
 
@@ -225,14 +223,25 @@ def plot_averages(avgs1, avgs2, avgs3):
 
 
 base_images = convert_pdf_to_image(files[2])[0]
-Image.fromarray(base_images).show()
-# lines_gone = get_lines_in_image(base_images)
-# lines_gone = denoise_image(lines_gone)[0]
-# lines_gone = apply_threshold(lines_gone, 25)
-# lines_gone = scale_image(lines_gone)[0]
-# Image.fromarray(lines_gone).show()
-# print(get_confidence_level_per_word(lines_gone))
-# print(get_average_confidence_level(base_images))
-# print(get_average_confidence_level(lines_gone))
-# draw_bounding_boxes(lines_gone)
-# Next step, try maybe inpainting for correction
+# lr = get_lines_in_image(base_images)
+# lrd = denoise_image(lr)
+# print(f"lrd: {get_average_confidence_level(lrd)}")
+# d = denoise_image(base_images)[0]
+# dlr = get_lines_in_image(d)
+# print(f"dlr: {get_average_confidence_level(dlr)}")
+# scaled = scale_image(lr)
+# print(f"scaled: {get_average_confidence_level(scaled)}")
+# d = denoise_image(base_images)[0]
+
+sharp = sharpen_image(base_images)[0]
+
+sharp = get_lines_in_image(sharp)
+sharp = apply_threshold(sharp, 75)[0]
+sharp = denoise_image(sharp)[0]
+# sharp = blur_image(sharp)[0]
+sharp = cv.morphologyEx(
+    sharp, cv.MORPH_OPEN, cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
+)
+
+Image.fromarray(sharp).show()
+print(f"sharp: {get_average_confidence_level(sharp)}")
