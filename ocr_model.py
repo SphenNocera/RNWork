@@ -160,7 +160,7 @@ def denoise_image(images: list[np.ndarray]):
     return modified_images
 
 
-def apply_threshold(images: list[np.ndarray], min_threshold: int):
+def apply_threshold(images: list[np.ndarray], min_threshold: int = 75):
 
     if not isinstance(images, list):
         images = [images]
@@ -221,27 +221,17 @@ def plot_averages(avgs1, avgs2, avgs3):
 
     plt.show()
 
+processing_methods = [scale_image, get_lines_in_image, denoise_image, sharpen_image, erode_image, apply_threshold]
 
-base_images = convert_pdf_to_image(files[2])[0]
-# lr = get_lines_in_image(base_images)
-# lrd = denoise_image(lr)
-# print(f"lrd: {get_average_confidence_level(lrd)}")
-# d = denoise_image(base_images)[0]
-# dlr = get_lines_in_image(d)
-# print(f"dlr: {get_average_confidence_level(dlr)}")
-# scaled = scale_image(lr)
-# print(f"scaled: {get_average_confidence_level(scaled)}")
-# d = denoise_image(base_images)[0]
+for i, file in enumerate(files):
+    print("")
+    print(i+1)
+    base_images = convert_pdf_to_image(file)[0]
+    print(f"base_image: {get_average_confidence_level(base_images)}")
 
-sharp = sharpen_image(base_images)[0]
-
-sharp = get_lines_in_image(sharp)
-sharp = apply_threshold(sharp, 75)[0]
-sharp = denoise_image(sharp)[0]
-# sharp = blur_image(sharp)[0]
-sharp = cv.morphologyEx(
-    sharp, cv.MORPH_OPEN, cv.getStructuringElement(cv.MORPH_RECT, (3, 3))
-)
-
-Image.fromarray(sharp).show()
-print(f"sharp: {get_average_confidence_level(sharp)}")
+    for process in processing_methods:
+        img = process(base_images)
+        confidence = get_average_confidence_level(img)
+        print(f"{process.__name__}: {confidence}")
+    
+    print("")
