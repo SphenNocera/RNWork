@@ -5,6 +5,7 @@ import cv2 as cv
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 files = [os.path.abspath(os.path.join(os.getcwd(), f"docs/acord_{number}.pdf")) for number in range( 1, 8 )]
 page_number = 0
@@ -227,11 +228,16 @@ for i, file in enumerate(files):
     print("")
     print(i+1)
     base_images = convert_pdf_to_image(file)[0]
-    print(f"base_image: {get_average_confidence_level(base_images)}")
+    start_time = time.time()
+    confidence = get_average_confidence_level(base_images)[0]
+    end_time = int((time.time() - start_time) * 1000)
+    print(f"{[confidence, end_time]}")
 
     for process in processing_methods:
+        start_time = time.time()
         img = process(base_images)
-        confidence = get_average_confidence_level(img)
-        print(f"{process.__name__}: {confidence}")
-    
+        confidence = get_average_confidence_level(img)[0]
+        end_time = int((time.time() - start_time) * 1000)
+        print(f"{[confidence, end_time]}")
+
     print("")
